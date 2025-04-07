@@ -1,4 +1,4 @@
-name: Multiply (Inline Python)
+name: Multiply Numbers
 
 on:
   workflow_dispatch:
@@ -22,6 +22,18 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Multiply numbers using inline Python
+      - name: Multiply and save result to JSON
         run: |
-          python -c 'num1 = float("${{ inputs.num1 }}"); num2 = float("${{ inputs.num2 }}"); result = num1 * num2; print("Result:", result)'
+          echo "import json" > multiply.py
+          echo "num1 = float('${{ inputs.num1 }}')" >> multiply.py
+          echo "num2 = float('${{ inputs.num2 }}')" >> multiply.py
+          echo "result = num1 * num2" >> multiply.py
+          echo "print(f'Result: {result}')" >> multiply.py
+          echo "with open('result.json', 'w') as f: json.dump({'result': result}, f)" >> multiply.py
+          python multiply.py
+
+      - name: Upload result JSON
+        uses: actions/upload-artifact@v3.1.3
+        with:
+          name: result
+          path: result.json
