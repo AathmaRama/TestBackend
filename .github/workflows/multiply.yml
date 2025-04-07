@@ -24,9 +24,4 @@ jobs:
 
       - name: Multiply numbers using inline Python
         run: |
-          python -c "
-num1 = float('${{ inputs.num1 }}')
-num2 = float('${{ inputs.num2 }}')
-result = num1 * num2
-print('Result:', result)
-"
+          python -c 'num1 = float("${{ inputs.num1 }}"); num2 = float("${{ inputs.num2 }}"); result = num1 * num2; print("Result:", result)'
