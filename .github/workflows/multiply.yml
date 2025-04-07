@@ -1,4 +1,4 @@
-name: Multiply Numbers (Python)
+name: Multiply (No Artifacts)
 
 on:
   workflow_dispatch:
@@ -25,12 +25,12 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Multiply using Python
+      - name: Multiply in Python
         run: |
-          python multiply.py ${{ inputs.num1 }} ${{ inputs.num2 }}
-
-      - name: Upload result
-        uses: actions/upload-artifact@v3.1.3
-        with:
-          name: multiplication-result
-          path: result.txt
+          python -c "
+import sys
+num1 = float('${{ inputs.num1 }}')
+num2 = float('${{ inputs.num2 }}')
+result = num1 * num2
+print('::notice::RESULT:', result)
+"
