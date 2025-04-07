@@ -1,4 +1,4 @@
-name: Multiply (No Artifacts)
+name: Multiply (Inline Python)
 
 on:
   workflow_dispatch:
@@ -17,20 +17,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
 
-      - name: Multiply in Python
+      - name: Multiply numbers using inline Python
         run: |
           python -c "
-import sys
 num1 = float('${{ inputs.num1 }}')
 num2 = float('${{ inputs.num2 }}')
 result = num1 * num2
-print('::notice::RESULT:', result)
+print('Result:', result)
 "
