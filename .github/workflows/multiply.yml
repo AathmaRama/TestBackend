@@ -1,0 +1,36 @@
+name: Multiply Numbers (Python)
+
+on:
+  workflow_dispatch:
+    inputs:
+      num1:
+        description: "First number"
+        required: true
+        type: string
+      num2:
+        description: "Second number"
+        required: true
+        type: string
+
+jobs:
+  multiply:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Multiply using Python
+        run: |
+          python multiply.py ${{ inputs.num1 }} ${{ inputs.num2 }}
+
+      - name: Upload result as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: multiplication-result
+          path: result.txt
