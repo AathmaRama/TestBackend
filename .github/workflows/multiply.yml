@@ -25,11 +25,11 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Multiply using Python
+      - name: Run multiplication in Python
         run: |
           python multiply.py ${{ inputs.num1 }} ${{ inputs.num2 }}
 
-      - name: Upload result as artifact
+      - name: Upload result
         uses: actions/upload-artifact@v3
         with:
           name: multiplication-result
