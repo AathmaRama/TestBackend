@@ -1,41 +1,47 @@
 name: Convert MKV to HLS and Deploy
 
 on:
-  repository_dispatch:
-    types: [convert-video]
+  workflow_dispatch:
+    inputs:
+      video_url:
+        description: "Raw MKV file URL"
+        required: true
+      timestamp:
+        description: "Timestamp (used to create folder)"
+        required: true
 
 jobs:
   convert:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repo
+    - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Install ffmpeg
+    - name: Install FFmpeg
       run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
-    - name: Set timestamp for preview folder
-      id: vars
-      run: echo "ts=$(date +%s)" >> $GITHUB_OUTPUT
+    - name: Create input and output directories
+      run: |
+        mkdir -p input
+        mkdir -p public/hls/preview-${{ github.event.inputs.timestamp }}
 
     - name: Download MKV video
       run: |
-        mkdir -p input
-        curl -L "${{ github.event.client_payload.video_url }}" -o input/input.mkv
+        echo "Downloading video..."
+        curl -L "${{ github.event.inputs.video_url }}" -o input/input.mkv
 
-    - name: Convert first 1 minute to HLS
+    - name: Convert first 60 seconds to HLS format
       run: |
-        mkdir -p public/hls/preview-${{ steps.vars.outputs.ts }}
         ffmpeg -ss 0 -t 60 -i input/input.mkv \
           -preset veryfast \
           -profile:v main \
           -start_number 0 \
           -hls_time 5 \
           -hls_list_size 0 \
-          -f hls public/hls/preview-${{ steps.vars.outputs.ts }}/preview.m3u8
+          -f hls public/hls/preview-${{ github.event.inputs.timestamp }}/preview.m3u8
 
-    - name: Keep only latest 5 previews
+    - name: Clean up older previews (keep latest 5)
       run: |
         cd public/hls
         ls -1dt preview-* | tail -n +6 | xargs rm -rf || true
