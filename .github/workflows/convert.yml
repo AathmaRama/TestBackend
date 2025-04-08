@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MKV to HLS Stream</title>
+</head>
+<body>
+  <h2>Test MKV to HLS Streaming</h2>
+  <input type="text" id="videoUrl" placeholder="Paste MKV URL" size="80">
+  <button onclick="triggerConversion()">Convert & Play</button>
+  <br><br>
+  <video id="video" controls width="640"></video>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script>
+    async function triggerConversion() {
+      const url = document.getElementById('videoUrl').value;
+
+      // Trigger GitHub workflow via repo_dispatch
+      await fetch("https://api.github.com/repos/YOUR_USERNAME/YOUR_REPO/dispatches", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer YOUR_GITHUB_PAT",
+          "Accept": "application/vnd.github+json",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          event_type: "convert-video",
+          client_payload: {
+            video_url: url
+          }
+        })
+      });
+
+      // Wait a bit for conversion and GitHub Pages publish
+      setTimeout(() => {
+        const hlsUrl = "https://YOUR_USERNAME.github.io/YOUR_REPO/hls/preview.m3u8";
+        const video = document.getElementById('video');
+
+        if (Hls.isSupported()) {
+          const hls = new Hls();
+          hls.loadSource(hlsUrl);
+          hls.attachMedia(video);
+        } else {
+          video.src = hlsUrl;
+        }
+      }, 30000); // Wait 30s (GitHub Action + Pages)
+    }
+  </script>
+</body>
+</html>
