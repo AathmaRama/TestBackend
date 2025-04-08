@@ -1,50 +1,47 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>MKV to HLS Stream</title>
-</head>
-<body>
-  <h2>Test MKV to HLS Streaming</h2>
-  <input type="text" id="videoUrl" placeholder="Paste MKV URL" size="80">
-  <button onclick="triggerConversion()">Convert & Play</button>
-  <br><br>
-  <video id="video" controls width="640"></video>
+name: Convert MKV to HLS and Deploy
 
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <script>
-    async function triggerConversion() {
-      const url = document.getElementById('videoUrl').value;
+on:
+  repository_dispatch:
+    types: [convert-video]
 
-      // Trigger GitHub workflow via repo_dispatch
-      await fetch("https://api.github.com/repos/YOUR_USERNAME/YOUR_REPO/dispatches", {
-        method: "POST",
-        headers: {
-          "Authorization": "Bearer YOUR_GITHUB_PAT",
-          "Accept": "application/vnd.github+json",
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          event_type: "convert-video",
-          client_payload: {
-            video_url: url
-          }
-        })
-      });
+jobs:
+  convert:
+    runs-on: ubuntu-latest
 
-      // Wait a bit for conversion and GitHub Pages publish
-      setTimeout(() => {
-        const hlsUrl = "https://YOUR_USERNAME.github.io/YOUR_REPO/hls/preview.m3u8";
-        const video = document.getElementById('video');
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
 
-        if (Hls.isSupported()) {
-          const hls = new Hls();
-          hls.loadSource(hlsUrl);
-          hls.attachMedia(video);
-        } else {
-          video.src = hlsUrl;
-        }
-      }, 30000); // Wait 30s (GitHub Action + Pages)
-    }
-  </script>
-</body>
-</html>
+    - name: Install ffmpeg
+      run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+    - name: Set timestamp for preview folder
+      id: vars
+      run: echo "ts=$(date +%s)" >> $GITHUB_OUTPUT
+
+    - name: Download MKV video
+      run: |
+        mkdir -p input
+        curl -L "${{ github.event.client_payload.video_url }}" -o input/input.mkv
+
+    - name: Convert first 1 minute to HLS
+      run: |
+        mkdir -p public/hls/preview-${{ steps.vars.outputs.ts }}
+        ffmpeg -ss 0 -t 60 -i input/input.mkv \
+          -preset veryfast \
+          -profile:v main \
+          -start_number 0 \
+          -hls_time 5 \
+          -hls_list_size 0 \
+          -f hls public/hls/preview-${{ steps.vars.outputs.ts }}/preview.m3u8
+
+    - name: Keep only latest 5 previews
+      run: |
+        cd public/hls
+        ls -1dt preview-* | tail -n +6 | xargs rm -rf || true
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./public
