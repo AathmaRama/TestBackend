@@ -34,8 +34,9 @@ jobs:
     - name: Convert first 60 seconds to HLS format
       run: |
         ffmpeg -ss 0 -t 60 -i input/input.mkv \
-          -preset veryfast \
-          -profile:v main \
+          -vf "format=yuv420p" \
+          -c:v libx264 -preset veryfast -profile:v high \
+          -c:a aac \
           -start_number 0 \
           -hls_time 5 \
           -hls_list_size 0 \
